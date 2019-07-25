@@ -40,6 +40,7 @@
 /auto/src
 /bazel/desugar/Desugar.jar
 /bison
+/bnl/src
 /boringssl/src
 /bouncycastle/lib/
 /breakpad/breakpad
@@ -158,6 +159,7 @@
 /nasm
 /netty-tcnative/src
 /netty4/src
+/ngtcp2/src
 /node/linux
 /node/mac
 /node/node_modules

@@ -1,0 +1,249 @@
+config("outcome_public_config") {
+  include_dirs = [
+    "outcome/include"
+  ]
+
+  cflags = [
+    "-Wno-unused-result"
+  ]
+}
+
+config("fmt_public_config") {
+  include_dirs = [
+    "fmt/include"
+  ]
+
+  defines = [
+    "FMT_EXCEPTIONS=0",
+    "FMT_HEADER_ONLY"
+  ]
+}
+
+component("fmt") {
+  public_configs = [
+    ":fmt_public_config"
+  ]
+}
+
+config("xxhash_public_config") {
+  include_dirs = [
+    "xxhash"
+  ]
+
+  defines = [
+    "XXH_INLINE_ALL"
+  ]
+}
+
+config("bnl_private_config") {
+  include_dirs = [
+    "src/bnl/quic/src"
+  ]
+
+  cflags = [
+    "-Wno-implicit-fallthrough",
+    "-Wno-unused-variable"
+  ]
+
+  if (is_component_build) {
+    defines = [
+      "bnl_base_EXPORTS",
+      "bnl_http3_EXPORTS",
+      "bnl_quic_EXPORTS",
+      "bnl_util_EXPORTS",
+      "bnl_log_EXPORTS",
+    ]
+  } else {
+    defines = [
+      "BNL_BASE_STATIC_DEFINE",
+      "BNL_HTTP3_STATIC_DEFINE",
+      "BNL_QUIC_STATIC_DEFINE",
+      "BNL_UTIL_STATIC_DEFINE",
+      "BNL_LOG_STATIC_DEFINE",
+    ]
+  }
+}
+
+config("bnl_public_config") {
+  include_dirs = [
+    "src/bnl/base/include",
+    "src/bnl/http3/include",
+    "src/bnl/quic/include",
+    "src/bnl/util/include",
+    "src/bnl/log/include",
+    "export"
+  ]
+}
+
+source_set("bnl-s-5") {
+  sources = [
+    "src/bnl/http3/src/codec/varint/decode.cpp",
+    "src/bnl/http3/src/codec/varint/encode.cpp",
+  ]
+
+  public_deps = [
+    "//third_party/ngtcp2",
+    "//third_party/boringssl",
+    ":fmt"
+  ]
+
+  configs += [":bnl_private_config"]
+  public_configs = [
+    ":bnl_public_config",
+    ":outcome_public_config",
+    ":xxhash_public_config",
+  ]
+}
+
+source_set("bnl-s-4") {
+  sources = [
+    "src/bnl/http3/src/codec/qpack/decode.cpp",
+    "src/bnl/http3/src/codec/qpack/encode.cpp",
+  ]
+
+  public_deps = [
+    "//third_party/ngtcp2",
+    "//third_party/boringssl",
+    ":fmt"
+  ]
+
+  configs += [":bnl_private_config"]
+  public_configs = [
+    ":bnl_public_config",
+    ":outcome_public_config",
+    ":xxhash_public_config",
+  ]
+}
+
+source_set("bnl-s-3") {
+  sources = [
+    "src/bnl/http3/src/codec/qpack/prefix_int/encode.cpp",
+    "src/bnl/http3/src/codec/qpack/prefix_int/decode.cpp",
+
+    "src/bnl/quic/src/client/ngtcp2/connection.cpp",
+  ]
+
+  public_deps = [
+    "//third_party/ngtcp2",
+    "//third_party/boringssl",
+    ":fmt"
+  ]
+
+  configs += [":bnl_private_config"]
+  public_configs = [
+    ":bnl_public_config",
+    ":outcome_public_config",
+    ":xxhash_public_config",
+  ]
+}
+
+source_set("bnl-s-2") {
+  sources = [
+    "src/bnl/http3/src/codec/qpack/literal/encode.cpp",
+    "src/bnl/http3/src/codec/qpack/literal/decode.cpp",
+
+    "src/bnl/http3/src/server/stream/control.cpp",
+    "src/bnl/http3/src/server/stream/request.cpp",
+
+    "src/bnl/quic/src/client/connection.cpp",
+  ]
+
+  public_deps = [
+    "//third_party/ngtcp2",
+    "//third_party/boringssl",
+    ":fmt"
+  ]
+
+  configs += [":bnl_private_config"]
+  public_configs = [
+    ":bnl_public_config",
+    ":outcome_public_config",    
+    ":xxhash_public_config",
+  ]
+}
+
+source_set("bnl-s-1") {
+  sources = [
+    "src/bnl/base/src/quic/event.cpp",
+
+    "src/bnl/http3/src/codec/qpack/huffman/decode.cpp",
+    "src/bnl/http3/src/codec/qpack/huffman/encode.cpp",
+
+    "src/bnl/http3/src/client/stream/control.cpp",
+    "src/bnl/http3/src/client/stream/request.cpp",
+    "src/bnl/http3/src/server/connection.cpp",
+  ]
+
+  public_deps = [
+    "//third_party/ngtcp2",
+    "//third_party/boringssl",
+    ":fmt"
+  ]
+
+  configs += [":bnl_private_config"]
+  public_configs = [
+    ":bnl_public_config",
+    ":outcome_public_config",    
+    ":xxhash_public_config",
+  ]
+}
+
+component("bnl") {
+  sources = [
+    "src/bnl/base/src/base/buffer_view.cpp",
+    "src/bnl/base/src/base/buffer.cpp",
+    "src/bnl/base/src/base/buffers.cpp",
+    "src/bnl/base/src/base/string_view.cpp",
+    "src/bnl/base/src/http3/event.cpp",
+    "src/bnl/base/src/http3/header.cpp",
+    "src/bnl/base/src/http3/settings.cpp",
+    "src/bnl/base/src/ip/address/ipv4.cpp",
+    "src/bnl/base/src/ip/address/ipv6.cpp",
+    "src/bnl/base/src/ip/address.cpp",
+    "src/bnl/base/src/ip/endpoint.cpp",
+    "src/bnl/base/src/ip/host.cpp",
+    "src/bnl/base/src/quic/path.cpp",
+    "src/bnl/base/src/log.cpp",
+
+    "src/bnl/http3/src/codec/frame/encode.cpp",
+    "src/bnl/http3/src/codec/frame/decode.cpp",
+    "src/bnl/http3/src/codec/frame/frame.cpp",    
+    "src/bnl/http3/src/codec/body.cpp",
+    "src/bnl/http3/src/codec/headers.cpp",
+    
+    "src/bnl/http3/src/endpoint/stream/control.cpp",
+    "src/bnl/http3/src/endpoint/stream/request.cpp",
+    "src/bnl/http3/src/client/connection.cpp",
+    
+    "src/bnl/quic/src/client/handshake.cpp",
+    "src/bnl/quic/src/client/stream.cpp",
+    "src/bnl/quic/src/crypto/boringssl.cpp",
+    "src/bnl/quic/src/crypto.cpp",
+
+    "src/bnl/util/src/string.cpp",
+
+    "src/bnl/log/src/console.cpp"
+  ]
+
+  public_deps = [
+    "//third_party/ngtcp2",
+    "//third_party/boringssl",
+    ":fmt"
+  ]
+
+  deps = [
+    ":bnl-s-1",
+    ":bnl-s-2",
+    ":bnl-s-3",
+    ":bnl-s-4",
+    ":bnl-s-5"
+  ]
+
+  configs += [":bnl_private_config"]
+  public_configs = [
+    ":bnl_public_config",
+    ":outcome_public_config",    
+    ":xxhash_public_config",
+  ]
+}
+
