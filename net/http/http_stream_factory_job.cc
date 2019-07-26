@@ -148,6 +148,7 @@ HttpStreamFactory::Job::Job(Delegate* delegate,
       using_spdy_(false),
       should_reconsider_proxy_(false),
       quic_request_(session_->quic_stream_factory()),
+      iquic_request_(session->iquic_stream_factory()),
       expect_on_quic_host_resolution_(false),
       using_existing_quic_session_(false),
       establishing_tunnel_(false),
@@ -769,16 +770,26 @@ int HttpStreamFactory::Job::DoInitConnectionImpl() {
       destination = destination_;
       ssl_config = &server_ssl_config_;
     }
-    int rv = quic_request_.Request(
-        destination, quic_version_, request_info_.privacy_mode, priority_,
-        request_info_.socket_tag, request_info_.network_isolation_key,
-        ssl_config->GetCertVerifyFlags(), url, net_log_, &net_error_details_,
-        base::BindOnce(&Job::OnFailedOnDefaultNetwork,
-                       ptr_factory_.GetWeakPtr()),
-        io_callback_);
+
+    int rv;
+    if (quic_version_.transport_version >= quic::IQUIC_DRAFT_22) {
+      rv = iquic_request_.Request(destination, request_info_.privacy_mode,
+                                  request_info_.socket_tag, url, net_log_,
+                                  io_callback_);
+    } else {
+      rv = rv = quic_request_.Request(
+          destination, quic_version_, request_info_.privacy_mode, priority_,
+          request_info_.socket_tag, request_info_.network_isolation_key,
+          ssl_config->GetCertVerifyFlags(), url, net_log_, &net_error_details_,
+          base::BindOnce(&Job::OnFailedOnDefaultNetwork,
+                         ptr_factory_.GetWeakPtr()),
+          io_callback_);
+    }
+
     if (rv == OK) {
       using_existing_quic_session_ = true;
-    } else if (rv == ERR_IO_PENDING) {
+    } else if (rv == ERR_IO_PENDING &&
+               quic_version_.transport_version < quic::IQUIC_DRAFT_22) {
       // There's no available QUIC session. Inform the delegate how long to
       // delay the main job.
       delegate_->MaybeSetWaitTimeForMainJob(
@@ -982,24 +993,30 @@ int HttpStreamFactory::Job::DoInitConnectionComplete(int result) {
     if (result < 0)
       return result;
 
-    if (stream_type_ == HttpStreamRequest::BIDIRECTIONAL_STREAM) {
-      std::unique_ptr<QuicChromiumClientSession::Handle> session =
-          quic_request_.ReleaseSessionHandle();
-      if (!session) {
-        // Quic session is closed before stream can be created.
-        return ERR_CONNECTION_CLOSED;
+    if (quic_version_.transport_version < quic::IQUIC_DRAFT_22) {
+      if (stream_type_ == HttpStreamRequest::BIDIRECTIONAL_STREAM) {
+        std::unique_ptr<QuicChromiumClientSession::Handle> session =
+            quic_request_.ReleaseSessionHandle();
+        if (!session) {
+          // Quic session is closed before stream can be created.
+          return ERR_CONNECTION_CLOSED;
+        }
+        bidirectional_stream_impl_.reset(
+            new BidirectionalStreamQuicImpl(std::move(session)));
+      } else {
+        std::unique_ptr<QuicChromiumClientSession::Handle> session =
+            quic_request_.ReleaseSessionHandle();
+        if (!session) {
+          // Quic session is closed before stream can be created.
+          return ERR_CONNECTION_CLOSED;
+        }
+        stream_ = std::make_unique<QuicHttpStream>(std::move(session));
       }
-      bidirectional_stream_impl_.reset(
-          new BidirectionalStreamQuicImpl(std::move(session)));
     } else {
-      std::unique_ptr<QuicChromiumClientSession::Handle> session =
-          quic_request_.ReleaseSessionHandle();
-      if (!session) {
-        // Quic session is closed before stream can be created.
-        return ERR_CONNECTION_CLOSED;
-      }
-      stream_ = std::make_unique<QuicHttpStream>(std::move(session));
+      iquic::IQuicSession* session = iquic_request_.ReleaseSession();
+      stream_ = std::make_unique<iquic::IQuicHttpStream>(session);
     }
+
     next_state_ = STATE_NONE;
     return OK;
   }

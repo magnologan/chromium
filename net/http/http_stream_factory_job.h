@@ -425,6 +425,7 @@ class HttpStreamFactory::Job
   bool should_reconsider_proxy_;
 
   QuicStreamRequest quic_request_;
+  iquic::IQuicStreamRequest iquic_request_;
 
   // Only valid for a QUIC job. Set when a QUIC connection is started. If true,
   // then OnQuicHostResolution() is expected to be called in the future.

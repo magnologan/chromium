@@ -1,11 +1,61 @@
-# ![Logo](chrome/app/theme/chromium/product_logo_64.png) Chromium
+# QuiChrome
 
-Chromium is an open-source browser project that aims to build a safer, faster,
-and more stable way for all users to experience the web.
+HTTP/3 implementation inside Chromium built on top of
+[ngtcp2](https://github.com/ngtcp2/ngtcp2).
 
-The project's web site is https://www.chromium.org.
+## Build Instructions
 
-Documentation in the source is rooted in [docs/README.md](docs/README.md).
+- Follow Chromium's instructions to get Chromium's code
+  (<https://www.chromium.org/developers/how-tos/get-the-code>) until the
+  'Setting up the build' section.
 
-Learn how to [Get Around the Chromium Source Code Directory Structure
-](https://www.chromium.org/developers/how-tos/getting-around-the-chrome-source-code).
+- Add this github fork as a second remote:
+
+  ```sh
+  git remote add fork https://github.com/DaanDeMeyer/chromium.git
+  ```
+
+- Fetch and checkout the iquic branch:
+
+  ```sh
+  git fetch fork iquic
+  git checkout iquic
+  ```
+
+- Sync Chromium's third party dependencies:
+
+  ```sh
+  gclient sync
+  ```
+
+- Generate ninja build files:
+
+  ```sh
+  gn gen out/default
+  ```
+
+  To get faster builds, run `gn args out/default` and write the following args:
+
+  ```txt
+  is_debug = false
+  is_component_build = true
+  enable_nacl = false
+  blink_symbol_level = 0
+  symbol_level = 1
+  ```
+
+  These flags are explained in the 'Faster Builds' section in Chromium's
+  get-the-code documentation.
+
+- Build the chrome target:
+
+  ```sh
+  autoninja -C out/default chrome
+  ```
+
+- Run the resulting chrome executable, specifying the iquic version and forcing
+  quic to be used on every website:
+
+  ```sh
+  out/default/chrome --quic-version=IQUIC_DRAFT_22 --origin-to-force-quic-on=* <url>
+  ```

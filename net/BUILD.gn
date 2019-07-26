@@ -1078,6 +1078,16 @@ component("net") {
       "quiche/common/platform/impl/quiche_logging_impl.h",
       "quiche/common/platform/impl/quiche_ptr_util_impl.h",
       "quiche/common/platform/impl/quiche_unordered_containers_impl.h",
+      "iquic/iquic_http_stream.cc",
+      "iquic/iquic_http_stream.h",
+      "iquic/iquic_error.cc",
+      "iquic/iquic_error.h",
+      "iquic/iquic_session.cc",
+      "iquic/iquic_session.h",
+      "iquic/iquic_socket.h",
+      "iquic/iquic_socket.cc",
+      "iquic/iquic_stream_factory.cc",
+      "iquic/iquic_stream_factory.h",
       "socket/client_socket_factory.cc",
       "socket/client_socket_factory.h",
       "socket/client_socket_pool.cc",
@@ -2371,6 +2381,7 @@ source_set("net_public_deps") {
     "//net/traffic_annotation",
     "//third_party/boringssl",
     "//url",
+    "//third_party/bnl",
   ]
 
   if (is_nacl) {
@@ -3254,6 +3265,14 @@ if (is_linux) {
       "//base",
       "//third_party/boringssl",
     ]
+  }
+
+  executable("iquic_client") {
+    sources = [
+      "iquic/iquic_main.cc"
+    ]
+
+    deps = [":net"]
   }
 }
 

@@ -31,6 +31,7 @@
 #include "net/net_buildflags.h"
 #include "net/quic/quic_stream_factory.h"
 #include "net/socket/connect_job.h"
+#include "net/iquic/iquic_stream_factory.h"
 #include "net/socket/next_proto.h"
 #include "net/socket/websocket_endpoint_lock_manager.h"
 #include "net/spdy/spdy_session_pool.h"
@@ -317,6 +318,7 @@ class NET_EXPORT HttpNetworkSession {
   }
   SpdySessionPool* spdy_session_pool() { return &spdy_session_pool_; }
   QuicStreamFactory* quic_stream_factory() { return &quic_stream_factory_; }
+  iquic::IQuicStreamFactory* iquic_stream_factory() { return &iquic_stream_factory_; }
   HttpAuthHandlerFactory* http_auth_handler_factory() {
     return http_auth_handler_factory_;
   }
@@ -420,6 +422,7 @@ class NET_EXPORT HttpNetworkSession {
   std::unique_ptr<ClientSocketPoolManager> websocket_socket_pool_manager_;
   std::unique_ptr<ServerPushDelegate> push_delegate_;
   QuicStreamFactory quic_stream_factory_;
+  iquic::IQuicStreamFactory iquic_stream_factory_;
   SpdySessionPool spdy_session_pool_;
   std::unique_ptr<HttpStreamFactory> http_stream_factory_;
   std::map<HttpResponseBodyDrainer*, std::unique_ptr<HttpResponseBodyDrainer>>
